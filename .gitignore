@@ -1,4 +1,9 @@
 .chrome-debug/
 .docs-profile/
+.tmp-browser-profile/
+.tmp-browser-profile-future/
 __check.js
+__dom.html
+__future-dom.html
+__set_storage.html
 Thumbs.db
