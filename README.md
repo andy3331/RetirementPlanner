@@ -29,6 +29,14 @@ The app runs a month-by-month simulation in three phases:
 
 It also compares two brokerage blend paths side by side so you can model how different portfolio mixes may change retirement timing and longevity.
 
+## Product Spec
+
+For future updates and regression review, see:
+
+- [docs/FEATURES_AND_PRD.md](docs/FEATURES_AND_PRD.md)
+
+This file captures product requirements, privacy guardrails, current decisions, and a regression checklist so functionality is not lost over time.
+
 ## Screenshots
 
 ### 1. Enter balances, income, spending, and portfolio blends
