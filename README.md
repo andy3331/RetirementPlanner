@@ -8,6 +8,7 @@ A single-file, browser-only retirement planning app for modeling:
 - Social Security timing
 - brokerage portfolio comparisons using two editable ETF/stock blends
 - balance history and contribution-history tracking over time
+- separate brokerage and 401k roles inside one retirement plan
 
 No backend is required. Everything runs locally in the browser and saves to `localStorage`.
 
@@ -28,6 +29,19 @@ The app runs a month-by-month simulation in three phases:
 3. Post-unlock drawdown with Social Security support
 
 It also compares two brokerage blend paths side by side so you can model how different portfolio mixes may change retirement timing and longevity.
+
+## Planning Logic
+
+The current planning model assumes:
+
+- brokerage is the bridge account from retirement age to 401k unlock
+- the 401k compounds using its own configured assumptions and stops receiving contributions at retirement
+- the 401k stays untouched until unlock age
+- after unlock, withdrawals come from the 401k first
+- if brokerage still has money after unlock, it remains invested as reserve capital until the 401k is exhausted
+- Social Security reduces the required portfolio draw starting at the selected claim age
+
+This means the brokerage comparison paths are used to understand bridge safety and residual brokerage value, while the 401k path is modeled from the 401k assumptions rather than from the brokerage blend.
 
 ## Product Spec
 
@@ -63,7 +77,9 @@ This file captures product requirements, privacy guardrails, current decisions, 
    - bridge viability at your target age
    - balances at retirement and at 59.5
    - portfolio longevity
-   - charted comparison of both blend paths
+   - `Brokerage Bridge Plan` for the bridge account under both blend paths
+   - `401k Path` using only 401k assumptions
+   - `Retirement Cash Flow` showing Social Security, 401k withdrawals, brokerage withdrawals, and spend
 
 ## Brokerage Blend Builder
 

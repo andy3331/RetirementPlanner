@@ -1,4 +1,5 @@
 .chrome-debug/
+.claude/
 .docs-profile/
 .tmp-browser-profile/
 .tmp-browser-profile-future/

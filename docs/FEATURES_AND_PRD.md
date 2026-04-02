@@ -14,7 +14,7 @@ The app is a single-file, browser-only retirement planning tool that helps a use
 - model early retirement viability
 - compare two different brokerage portfolio blends
 - estimate bridge survival until 401k access
-- estimate post-unlock longevity
+- estimate post-unlock longevity with a defined withdrawal order
 - incorporate Social Security timing
 - track historical balance, salary, and contribution changes over time
 
@@ -194,10 +194,11 @@ From retirement age to unlock age:
 
 From unlock age onward:
 
-- brokerage and 401k are treated as a combined pool
+- withdrawals default to 401k first
+- brokerage may remain invested as a reserve if it survives the bridge
 - Social Security is added starting at claim age
 - monthly withdrawals continue net of SS
-- longevity is the age at which the pool hits zero, if it does
+- longevity is the age at which the remaining retirement assets hit zero, if they do
 
 ### 8. Viability outputs
 
@@ -221,14 +222,18 @@ The app must show whether the selected target retirement age is bridge-viable fo
 
 The app must support:
 
-- brokerage growth chart
-- longevity chart
+- brokerage bridge chart
+- 401k path chart
+- retirement cash-flow chart
 
 Expected behavior:
 
 - charts must not break page layout
 - if charts fail, the planner must still function
 - fallback messaging should appear if chart rendering fails
+- the brokerage bridge chart must compare brokerage blend paths against the bridge requirement
+- the 401k chart must use only 401k assumptions and must not vary by brokerage blend
+- the retirement cash-flow chart must show Social Security, 401k withdrawals, brokerage withdrawals, and spend clearly enough for monthly review
 
 ### 11. Balance history
 
@@ -313,6 +318,8 @@ These are current product decisions that future updates should respect unless in
 5. The comparison engine currently supports two holdings per brokerage blend.
 6. Balance-history edit/delete capability is supported.
 7. Contribution-history display exists, but future work may improve true forward-dated assumption replay.
+8. After unlock, the default withdrawal policy is `401k first`, with leftover brokerage preserved as reserve capital until needed.
+9. The 401k planning chart is intentionally independent of the brokerage blend comparison.
 
 ## Future Improvement Ideas
 
@@ -337,13 +344,14 @@ Before merging changes, verify:
 5. Both brokerage blend paths still render and compare correctly.
 6. The app still supports manual return entry.
 7. Simulation outputs still appear for both comparison paths.
-8. Charts do not stretch the page vertically.
-9. Balance history still renders and can be edited/deleted.
-10. Contribution-history tracking still renders.
-11. Monthly / 1-year / lifetime change cards still display.
-12. Public tracked defaults are still sanitized.
-13. Public screenshots do not contain private user data.
-14. README still matches the actual UI.
+8. The 401k chart is the same regardless of brokerage blend selection, unless 401k assumptions themselves change.
+9. Charts do not stretch the page vertically.
+10. Balance history still renders and can be edited/deleted.
+11. Contribution-history tracking still renders.
+12. Monthly / 1-year / lifetime change cards still display.
+13. Public tracked defaults are still sanitized.
+14. Public screenshots do not contain private user data.
+15. README still matches the actual UI.
 
 ## Change Management Guidance
 
