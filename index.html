@@ -239,14 +239,17 @@
           <div class="panelHead">
             <div>
               <h2>Brokerage Path Builder</h2>
-              <p class="sub">Define two portfolio blends to compare. Primary is your base-plan path.</p>
+              <p class="sub">Define two scenario-only portfolio blends to compare in the What If view.</p>
             </div>
-            <div class="mini" id="blendFetchStatus">Auto-fill estimates 5-year CAGR. Manual entry always wins.</div>
+            <div class="btns">
+              <button class="btn alt sm" id="promoteBlendToBasePlan" type="button">Use Primary As Base Plan</button>
+              <div class="mini" id="blendFetchStatus">Auto-fill estimates 5-year CAGR. Manual entry always wins.</div>
+            </div>
           </div>
           <div class="cards">
             <div class="group">
               <h3 id="blendALabel">Primary blend</h3>
-              <p class="sub">Base-plan brokerage mix for on-track review and scenario modeling.</p>
+              <p class="sub">Primary scenario path used only in the What If comparison unless you explicitly promote it to the base plan.</p>
               <div class="rowGrid">
                 <div class="field">
                   <label for="blendATicker1">Holding 1 ticker</label>

@@ -24,6 +24,13 @@
     chartEndAge: 80,
     showBlendAChart: true,
     showBlendBChart: true,
+    basePlanTicker1: "IYW",
+    basePlanWeight1: 90,
+    basePlanReturn1: 16.8,
+    basePlanTicker2: "VTI",
+    basePlanWeight2: 10,
+    basePlanReturn2: 11,
+    basePlanAccumReturn: 16.2,
     blendATicker1: "IYW",
     blendAWeight1: 90,
     blendAReturn1: 16.8,
@@ -80,6 +87,11 @@
     "annualRetirementSpend",
     "unlockAge",
     "chartEndAge",
+    "basePlanWeight1",
+    "basePlanReturn1",
+    "basePlanWeight2",
+    "basePlanReturn2",
+    "basePlanAccumReturn",
     "blendAReturn1",
     "blendAReturn2",
     "blendBReturn1",
@@ -228,6 +240,7 @@
     openAssumptionModal: el("openAssumptionModal"),
     openAssumptionModalInline: el("openAssumptionModalInline"),
     syncScenarioAgeBtn: el("syncScenarioAgeBtn"),
+    promoteBlendToBasePlan: el("promoteBlendToBasePlan"),
     resetDefaultsBtn: el("resetDefaultsBtn"),
     drawerBackdrop: el("drawerBackdrop"),
     settingsDrawer: el("settingsDrawer"),
@@ -402,6 +415,21 @@
         applyRequestedBlendDefaults(s);
         s.blendDefaultsVersion = base.blendDefaultsVersion;
       }
+      if (!String(s.basePlanTicker1 || "").trim())
+        s.basePlanTicker1 = String(s.blendATicker1 || base.basePlanTicker1).trim().toUpperCase();
+      if (!(n(s.basePlanWeight1) > 0)) s.basePlanWeight1 = n(s.blendAWeight1, base.basePlanWeight1);
+      if (!(n(s.basePlanReturn1) > 0)) s.basePlanReturn1 = n(s.blendAReturn1, base.basePlanReturn1);
+      if (!String(s.basePlanTicker2 || "").trim())
+        s.basePlanTicker2 = String(s.blendATicker2 || base.basePlanTicker2).trim().toUpperCase();
+      if (!(n(s.basePlanWeight2) > 0)) s.basePlanWeight2 = n(s.blendAWeight2, base.basePlanWeight2);
+      if (!(n(s.basePlanReturn2) > 0)) s.basePlanReturn2 = n(s.blendAReturn2, base.basePlanReturn2);
+      if (!(n(s.basePlanAccumReturn) > 0)) {
+        const total = Math.max(1, n(s.basePlanWeight1) + n(s.basePlanWeight2));
+        s.basePlanAccumReturn =
+          (n(s.basePlanReturn1) * n(s.basePlanWeight1) +
+            n(s.basePlanReturn2) * n(s.basePlanWeight2)) /
+          total;
+      }
       s.balanceHistory =
         Array.isArray(s.balanceHistory) && s.balanceHistory.length
           ? s.balanceHistory.map((r) => ({
@@ -514,14 +542,16 @@
   }
 
   /* ===== BLEND HELPERS ===== */
+  function labelFromFields(t1, t2) {
+    return [String(t1 || "").trim().toUpperCase(), String(t2 || "").trim().toUpperCase()]
+      .filter(Boolean)
+      .join(" / ") || "Custom blend";
+  }
   function blendLabel(prefix) {
-    const t1 = String(state[`${prefix}Ticker1`] || "")
-        .trim()
-        .toUpperCase(),
-      t2 = String(state[`${prefix}Ticker2`] || "")
-        .trim()
-        .toUpperCase();
-    return [t1, t2].filter(Boolean).join(" / ") || "Custom blend";
+    return labelFromFields(state[`${prefix}Ticker1`], state[`${prefix}Ticker2`]);
+  }
+  function basePlanLabel() {
+    return labelFromFields(state.basePlanTicker1, state.basePlanTicker2);
   }
   function blendRate(prefix) {
     const w1 = Math.max(0, n(state[`${prefix}Weight1`], 0)),
@@ -540,6 +570,15 @@
       state.customIywAccumReturn = state.iywAccumReturn;
     if (!(n(state.customQqqmAccumReturn) > 0))
       state.customQqqmAccumReturn = state.qqqmAccumReturn;
+  }
+  function syncBasePlanBlendFromScenario() {
+    state.basePlanTicker1 = String(state.blendATicker1 || "").trim().toUpperCase();
+    state.basePlanWeight1 = n(state.blendAWeight1);
+    state.basePlanReturn1 = n(state.blendAReturn1);
+    state.basePlanTicker2 = String(state.blendATicker2 || "").trim().toUpperCase();
+    state.basePlanWeight2 = n(state.blendAWeight2);
+    state.basePlanReturn2 = n(state.blendAReturn2);
+    state.basePlanAccumReturn = n(state.iywAccumReturn);
   }
 
   /* ===== SCENARIO RATES ===== */
@@ -583,8 +622,8 @@
   function baselinePlanningRates(s) {
     return {
       label: "Base plan",
-      iyw: n(s.iywAccumReturn),
-      qqqm: n(s.qqqmAccumReturn),
+      iyw: n(s.basePlanAccumReturn, s.iywAccumReturn),
+      qqqm: n(s.basePlanAccumReturn, s.iywAccumReturn),
       post: n(s.postRetirementReturn),
       kacc: n(s.k401AccumReturn),
       kpost: n(s.k401PostReturn),
@@ -667,16 +706,24 @@
       cashflowSpendSeries = [],
       cashflow401kWithdrawSeries = [],
       cashflowBrokerageWithdrawSeries = [],
+      cashflowGapSeries = [],
       cSeries = [];
     const mRet = Math.max(0, Math.ceil((retAge - cur) * 12 - 1e-9)),
       actual = cur + mRet / 12;
     const pushB = (x, y) => {
-      if (x <= 62.001) bSeries.push({ x, y: Math.max(0, y) });
+      if (x <= chartEndAge + 0.001) bSeries.push({ x, y: Math.max(0, y) });
     };
     const pushK = (x, y) => {
       if (x <= chartEndAge + 0.001) kSeries.push({ x, y: Math.max(0, y) });
     };
-    const pushCash = (x, ssAnnual, spendAnnual, k401WithdrawAnnual, brokerageWithdrawAnnual) => {
+    const pushCash = (
+      x,
+      ssAnnual,
+      spendAnnual,
+      k401WithdrawAnnual,
+      brokerageWithdrawAnnual,
+      gapAnnual,
+    ) => {
       if (x <= chartEndAge + 0.001) {
         cashflowSSSeries.push({ x, y: Math.max(0, ssAnnual) });
         cashflowSpendSeries.push({ x, y: Math.max(0, spendAnnual) });
@@ -687,6 +734,10 @@
         cashflowBrokerageWithdrawSeries.push({
           x,
           y: Math.max(0, brokerageWithdrawAnnual),
+        });
+        cashflowGapSeries.push({
+          x,
+          y: Math.max(0, gapAnnual),
         });
       }
     };
@@ -714,12 +765,15 @@
         Math.ceil((unlock - actual) * 12 - 1e-9),
       );
       for (let i = 1; i <= mUnlock; i++) {
-        b = Math.max(0, b * (1 + bPost) - spend);
+        const grownBrokerage = b * (1 + bPost),
+          bridgeWithdraw = Math.min(grownBrokerage, spend),
+          bridgeGap = Math.max(0, spend - bridgeWithdraw);
+        b = Math.max(0, grownBrokerage - spend);
         k = k * (1 + kPost);
         const agePoint = actual + i / 12;
         pushB(agePoint, b);
         pushK(agePoint, k);
-        pushCash(agePoint, 0, annualSpend, 0, annualSpend);
+        pushCash(agePoint, 0, annualSpend, 0, bridgeWithdraw * 12, bridgeGap * 12);
       }
       bUnlock = b;
       kUnlock = k;
@@ -748,22 +802,37 @@
         if (life == null) life = a;
         cSeries.push({ x: a, y: 0 });
         pushB(a, 0);
-        pushCash(a, income * 12, annualSpend, kWithdraw * 12, bWithdraw * 12);
+        pushCash(a, income * 12, annualSpend, 0, 0, need * 12);
         break;
       }
+      let actualKWithdraw = 0,
+        actualBWithdraw = 0,
+        actualGap = 0;
       if (need > 0) {
         let remain = need,
           kw = Math.min(ks, remain);
         ks -= kw;
         remain -= kw;
-        if (remain > 0.01) bs = Math.max(0, bs - remain);
+        actualKWithdraw = kw;
+        const bw = Math.min(bs, remain);
+        bs -= bw;
+        remain -= bw;
+        actualBWithdraw = bw;
+        actualGap = Math.max(0, remain);
       }
       bs *= 1 + bPost;
       ks *= 1 + kPost;
       const total = Math.max(0, bs + ks);
       cSeries.push({ x: a, y: total });
       pushB(a, bs);
-      pushCash(a, income * 12, annualSpend, kWithdraw * 12, bWithdraw * 12);
+      pushCash(
+        a,
+        income * 12,
+        annualSpend,
+        actualKWithdraw * 12,
+        actualBWithdraw * 12,
+        actualGap * 12,
+      );
       if (total <= 0.01 && life == null) {
         life = a;
         break;
@@ -789,6 +858,7 @@
       cashflowSpendSeries,
       cashflow401kWithdrawSeries,
       cashflowBrokerageWithdrawSeries,
+      cashflowGapSeries,
       combinedSeries: cSeries,
     };
   }
@@ -1142,8 +1212,12 @@
       brokerage = ages.map((agePoint) =>
         sampleSeriesAtAge(result.cashflowBrokerageWithdrawSeries, agePoint),
       ),
-      gap = ages.map((_, index) =>
-        Math.max(0, spend[index] - ss[index] - k401[index] - brokerage[index]),
+      gap = ages.map((agePoint, index) =>
+        Math.max(
+          0,
+          sampleSeriesAtAge(result.cashflowGapSeries, agePoint) ||
+            (spend[index] - ss[index] - k401[index] - brokerage[index]),
+        ),
       );
     return {
       labels: ages.map((agePoint) => age(agePoint)),
@@ -1353,6 +1427,7 @@
       monthsToTarget = target?.monthsToTarget ?? monthsBetweenAges(latestAge, targetAge),
       targetDate = target?.date ?? addMonthsIso(latest.date, monthsToTarget),
       fundKey = currentPlanFundKey(),
+      projected = projectedAccumulationSeries(currentState, fundKey, rates),
       monthKeys = monthKeysBetween(rows[0].date, targetDate),
       labels = monthKeys.map(chartMonthLabel),
       actualByMonth = rows.reduce((acc, row) => {
@@ -1360,53 +1435,41 @@
         return acc;
       }, {}),
       latestMonthKey = chartMonthKey(latest.date),
-      latestRequiredBrokerage =
+      latestMonthIndex = monthKeys.findIndex((key) => key === latestMonthKey);
+    const requiredBrokerage = [],
+      required401k = [];
+    for (let index = 0; index < monthKeys.length; index += 1) {
+      if (index < latestMonthIndex) {
+        requiredBrokerage.push(null);
+        required401k.push(null);
+        continue;
+      }
+      const monthKey = monthKeys[index],
+        monthRow =
+          actualByMonth[monthKey] || {
+            date: `${monthKey}-01`,
+            brokerage: projected.brokerage[monthKey] ?? n(latest.brokerage),
+            k401: projected.k401[monthKey] ?? n(latest.k401),
+          };
+      requiredBrokerage.push(
         requiredRoleBalanceForSnapshot(
-          latest,
+          monthRow,
           currentState,
           fundKey,
           rates,
           "brokerage",
-        ) ?? n(latest.brokerage),
-      latestRequired401k =
+        ) ?? null,
+      );
+      required401k.push(
         requiredRoleBalanceForSnapshot(
-          latest,
+          monthRow,
           currentState,
           fundKey,
           rates,
           "k401",
-        ) ?? n(latest.k401),
-      targetRequiredBrokerage =
-        target == null
-          ? latestRequiredBrokerage
-          : (requiredRoleBalanceForSnapshot(
-              target,
-              currentState,
-              fundKey,
-              rates,
-              "brokerage",
-            ) ?? latestRequiredBrokerage),
-      targetRequired401k =
-        target == null
-          ? latestRequired401k
-          : (requiredRoleBalanceForSnapshot(
-              target,
-              currentState,
-              fundKey,
-              rates,
-              "k401",
-            ) ?? latestRequired401k),
-      requiredBrokeragePath = straightLinePath(
-        latestRequiredBrokerage,
-        targetRequiredBrokerage,
-        monthsToTarget,
-      ),
-      required401kPath = straightLinePath(
-        latestRequired401k,
-        targetRequired401k,
-        monthsToTarget,
-      ),
-      latestMonthIndex = monthKeys.findIndex((key) => key === latestMonthKey);
+        ) ?? null,
+      );
+    }
     return {
       labels,
       actualBrokerage: monthKeys.map((monthKey) =>
@@ -1415,16 +1478,8 @@
       actual401k: monthKeys.map((monthKey) =>
         actualByMonth[monthKey] ? n(actualByMonth[monthKey].k401) : null,
       ),
-      requiredBrokerage: monthKeys.map((_, index) =>
-        index < latestMonthIndex
-          ? null
-          : requiredBrokeragePath[index - latestMonthIndex] ?? null,
-      ),
-      required401k: monthKeys.map((_, index) =>
-        index < latestMonthIndex
-          ? null
-          : required401kPath[index - latestMonthIndex] ?? null,
-      ),
+      requiredBrokerage,
+      required401k,
     };
   }
   function latestProgressBenchmark(rates) {
@@ -1454,7 +1509,7 @@
       actualTotal = totalBalance(latest);
     return {
       key: fundKey,
-      label: `your base plan (${blendLabel("blendA")})`,
+      label: `your base plan (${basePlanLabel()})`,
       profile,
       requiredBrokerage,
       required401k,
@@ -1531,7 +1586,7 @@
     ui.basePlanSnapshot.innerHTML = [
       `<article class="card"><div class="top"><div><h3>Timeline</h3><p class="sub">Dates that define the benchmark.</p></div></div><div class="rowGrid"><div class="row"><span>Target retirement age</span><strong>${age(state.targetRetirementAge)}</strong></div><div class="row"><span>401k unlock age</span><strong>${age(state.unlockAge)}</strong></div><div class="row"><span>SS claim age</span><strong>${num(state.ssClaimAge, 0)}</strong></div><div class="row"><span>Latest snapshot</span><strong>${latestDate}</strong></div></div></article>`,
       `<article class="card"><div class="top"><div><h3>Spending</h3><p class="sub">Used for on-track review only.</p></div></div><div class="rowGrid"><div class="row"><span>Annual spend target</span><strong>${money(state.annualRetirementSpend)}</strong></div><div class="row"><span>Social Security at claim</span><strong>${money(ssMonthly(state) * 12)}/yr</strong></div><div class="row"><span>Bridge needed at retirement</span><strong>${money(profile.requiredBrokerageAtRetirement)}</strong></div><div class="row"><span>401k needed at unlock</span><strong>${money(profile.required401kAtUnlock)}</strong></div></div></article>`,
-      `<article class="card"><div class="top"><div><h3>Accumulation</h3><p class="sub">Current contribution settings and returns.</p></div></div><div class="rowGrid"><div class="row"><span>Brokerage path</span><strong>${blendLabel("blendA")} at ${pct(rates.iyw)}</strong></div><div class="row"><span>Brokerage / mo</span><strong>${money(active.monthlyBrokerageContribution ?? state.monthlyBrokerageContribution)}</strong></div><div class="row"><span>401k contribution</span><strong>${pct(active.contributionPct ?? state.contributionPct)} + ${pct(active.employerMatchPct ?? state.employerMatchPct)} match</strong></div><div class="row"><span>401k growth</span><strong>${pct(rates.kacc)} / ${pct(rates.kpost)}</strong></div></div></article>`,
+      `<article class="card"><div class="top"><div><h3>Accumulation</h3><p class="sub">Current contribution settings and returns.</p></div></div><div class="rowGrid"><div class="row"><span>Base-plan brokerage path</span><strong>${basePlanLabel()} at ${pct(rates.iyw)}</strong></div><div class="row"><span>Brokerage / mo</span><strong>${money(active.monthlyBrokerageContribution ?? state.monthlyBrokerageContribution)}</strong></div><div class="row"><span>401k contribution</span><strong>${pct(active.contributionPct ?? state.contributionPct)} + ${pct(active.employerMatchPct ?? state.employerMatchPct)} match</strong></div><div class="row"><span>401k growth</span><strong>${pct(rates.kacc)} / ${pct(rates.kpost)}</strong></div></div></article>`,
     ].join("");
   }
 
@@ -2814,6 +2869,11 @@
   ui.syncScenarioAgeBtn?.addEventListener("click", () =>
     update("scenarioTargetRetirementAge", n(state.targetRetirementAge)),
   );
+  ui.promoteBlendToBasePlan?.addEventListener("click", () => {
+    syncBasePlanBlendFromScenario();
+    save();
+    render();
+  });
 
   /* ===== MODAL HELPERS ===== */
   function assumptionModalSeed(dateValue) {
