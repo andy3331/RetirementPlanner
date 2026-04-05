@@ -70,6 +70,56 @@ img, svg { display: block; max-width: 100%; }
   padding: 0 1.25rem 3rem;
 }
 
+/* ===== APP LOADER ===== */
+.appLoader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.appLoader.hidden { display: none !important; }
+.appLoaderSpinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid color-mix(in srgb, var(--brand) 20%, transparent);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== PRINT HEADER (screen: hidden, print: visible) ===== */
+.printHeader { display: none; }
+.printHeader h1 { margin: 0 0 0.25rem; font-size: 1.4rem; }
+.printHeader p { margin: 0; color: #555; font-size: 0.88rem; }
+
+/* ===== FIRST-RUN BANNER ===== */
+.firstRunBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: color-mix(in srgb, var(--brand) 8%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--rSm);
+  margin: 1rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.firstRunBanner code {
+  font-family: monospace;
+  background: var(--brandFaint);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+}
+
 /* ===== TOP BAR ===== */
 .topBar {
   position: sticky;
@@ -225,6 +275,59 @@ img, svg { display: block; max-width: 100%; }
   padding-top: 0.25rem;
 }
 
+/* ===== MILESTONE PILLS ===== */
+.milestonesRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+}
+.milestonePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+.milestonePill.good {
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 22%, transparent);
+}
+.milestonePill.okay {
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 22%, transparent);
+}
+.milestonePill.bad {
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 22%, transparent);
+}
+.milestonePill.neutral {
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  color: var(--brand);
+  border-color: color-mix(in srgb, var(--brand) 18%, transparent);
+}
+.milestonePill.amber {
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 22%, transparent);
+}
+
+/* ===== CATCH-UP NOTE ===== */
+.catchUpNote {
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--warn);
+  background: color-mix(in srgb, var(--warn) 7%, var(--card));
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 /* ===== SECTION PANELS ===== */
 .panel {
   background: var(--card);
@@ -309,6 +412,44 @@ h3 {
   margin-bottom: 0.75rem;
 }
 
+/* ===== SAVED SCENARIO CARDS ===== */
+.savedScenarioCard {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.savedScenarioCard:hover {
+  border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
+  box-shadow: var(--shadow);
+}
+.savedScenarioCard .scenarioCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+.savedScenarioCard .scenarioCardName {
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.savedScenarioCard .scenarioCardMeta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+.savedScenarioCard .scenarioCardActions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
 /* ===== GROUPS (input clusters) ===== */
 .group {
   display: grid;
@@ -334,6 +475,73 @@ h3 {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
+}
+.labelWithHelp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.helpTip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border));
+  background: color-mix(in srgb, var(--brand) 10%, var(--card));
+  color: var(--brand);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  outline: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.helpTip:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+.helpBubble {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.45rem);
+  width: min(280px, 70vw);
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--border));
+  background: color-mix(in srgb, var(--card) 96%, black 4%);
+  color: var(--text);
+  box-shadow: var(--shadowHover);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  font-weight: 500;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
+  z-index: 25;
+}
+.helpBubble::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  background: inherit;
+  border-left: 1px solid color-mix(in srgb, var(--brand) 24%, var(--border));
+  border-top: 1px solid color-mix(in srgb, var(--brand) 24%, var(--border));
+  transform: rotate(45deg);
+}
+.helpTip:hover .helpBubble,
+.helpTip:focus-visible .helpBubble,
+.helpTip:focus .helpBubble {
+  opacity: 1;
+  transform: translateY(0);
 }
 input, select {
   width: 100%;
@@ -791,6 +999,7 @@ details summary::marker { color: var(--brand); }
 .drawerActions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border);
   margin-top: 1rem;
@@ -912,7 +1121,8 @@ details summary::marker { color: var(--brand); }
 /* ===== PRINT ===== */
 @media print {
   body { background: #fff !important; color: #000 !important; }
-  .topBar, .settingsBtn, .btn, .toggles, .modalBg, .drawerBackdrop, .tabNav { display: none !important; }
+  .topBar, .settingsBtn, .btn, .toggles, .modalBg, .drawerBackdrop, .tabNav,
+  .appLoader, .firstRunBanner, .milestonesRow { display: none !important; }
   .tabContent { display: block !important; }
   .page { padding: 0; max-width: none; }
   .panel, .group, .card, .chartWrap, .statusCard, .sum, .warn {
@@ -920,6 +1130,10 @@ details summary::marker { color: var(--brand); }
     background: #fff !important;
     break-inside: avoid;
   }
-  .charts, .cards, .grid2, .grid3, .grid4, .statusGrid { display: block !important; }
+  .charts, .cards { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; }
+  .grid2, .grid3, .grid4, .statusGrid { display: block !important; }
   .charts > *, .cards > *, .grid2 > *, .grid3 > *, .grid4 > * { margin-bottom: 0.75rem; }
+  .printHeader { display: block !important; padding: 1rem 0 0.75rem; border-bottom: 2px solid #ccc; margin-bottom: 1rem; }
+  .tabContent[data-tab="whatif"] { page-break-before: always; }
+  .panel[id="savedScenariosPanel"] { page-break-before: always; }
 }
