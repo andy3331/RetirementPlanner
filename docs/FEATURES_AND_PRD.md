@@ -161,12 +161,15 @@ The app must support:
 - Bull case
 - Tech crash
 - Custom
+- Monte Carlo stress testing
 
 Expected behavior:
 
 - scenario selection updates both portfolio comparison paths
 - custom scenario allows manual return override
 - scenario description text updates live
+- Monte Carlo stays in the What If view and must not change the base-plan on-track review
+- Monte Carlo should report probability-based outcomes separately from deterministic outputs
 
 ### 7. Simulation engine
 
@@ -225,6 +228,7 @@ The app must support:
 - brokerage bridge chart
 - 401k path chart
 - retirement cash-flow chart
+- Monte Carlo percentile path chart
 
 Expected behavior:
 
@@ -234,6 +238,7 @@ Expected behavior:
 - the brokerage bridge chart must compare brokerage blend paths against the bridge requirement
 - the 401k chart must use only 401k assumptions and must not vary by brokerage blend
 - the retirement cash-flow chart must show Social Security, 401k withdrawals, brokerage withdrawals, and spend clearly enough for monthly review
+- the Monte Carlo chart must remain scenario-only and display percentile paths rather than actual-history balances
 
 ### 11. Balance history
 
@@ -332,6 +337,8 @@ These are reasonable future enhancements, but they should not remove current beh
 - support local chart fallback without CDN dependency
 - add custom named scenarios
 - support inflation-adjusted spending assumptions
+- add a Social Security stop-work estimator mode that reduces benefits when work stops before claim age
+- support importing or manually entering SSA yearly earnings history to improve stop-work estimates
 
 ## Regression Checklist
 

@@ -1,3 +1,4 @@
+# Tooling
 .chrome-debug/
 .claude/
 .docs-profile/
@@ -8,3 +9,9 @@ __dom.html
 __future-dom.html
 __set_storage.html
 Thumbs.db
+
+# Node
+node_modules/
+
+# Your personal data — never commit this
+data/

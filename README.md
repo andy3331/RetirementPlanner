@@ -1,131 +1,132 @@
 # Retirement Planner
 
-A single-file, browser-only retirement planning app for modeling:
+A personal retirement planning tool for modeling:
 
-- current brokerage and 401k balances
-- ongoing contributions and employer match
-- bridge viability before 401k unlock
+- Current brokerage and 401k balances
+- Ongoing contributions and employer match
+- Bridge viability before 401k unlock
 - Social Security timing
-- brokerage portfolio comparisons using two editable ETF/stock blends
-- balance history and contribution-history tracking over time
-- separate brokerage and 401k roles inside one retirement plan
+- Brokerage portfolio comparisons using two editable ETF/stock blends
+- Balance history and contribution-history tracking over time
+- Scenario modeling (Bull, Crash, Custom, named saves)
+- Monte Carlo scenario stress testing
+- Inflation-adjusted projections
 
-No backend is required. Everything runs locally in the browser and saves to `localStorage`.
+Runs as a local Node.js server. All data stays on your machine.
+
+---
+
+## Quick Start
+
+```bash
+npm install
+npm start
+```
+
+Then open **http://localhost:3456** in your browser.
+
+---
+
+## Your Data File
+
+On first launch the app creates **`data/planner-data.json`** in this project folder. This file stores all of your personal numbers — balances, salary, contributions, history, scenarios, everything.
+
+**Important things to know:**
+
+- `data/` is in `.gitignore` — it will never be committed to Git, even if you push this repo.
+- The file is plain JSON. You can open it, read it, back it up, or copy it to another machine.
+- If you share this project with someone else, they get a clean slate. Their data file is theirs, yours is yours.
+- To back up your data: copy `data/planner-data.json` somewhere safe (cloud drive, USB, etc.).
+- To restore: place your backup file back at `data/planner-data.json` and restart the server.
+- To move to a new machine: copy the whole project folder, or just copy `data/planner-data.json` into a fresh clone.
+
+You can also **export** a dated JSON snapshot or **import** a backup from the Settings drawer inside the app.
+
+---
 
 ## Privacy
 
-This repository is sanitized for public sharing.
+This repository is safe to share publicly.
 
-- No personal balances, salary, retirement age, spend target, contribution settings, or holdings are stored in the tracked files.
+- No personal balances, salary, retirement age, spend target, contribution settings, or holdings are stored in any tracked file.
 - The defaults in the app are generic sample values only.
-- Your actual entries are stored only in your local browser `localStorage` unless you manually share them.
+- Your actual data lives only in `data/planner-data.json`, which is gitignored.
 
-## What It Does
+---
+
+## How the Plan Works
 
 The app runs a month-by-month simulation in three phases:
 
-1. Accumulation from today to your target retirement age
-2. Bridge period from retirement to 401k unlock
-3. Post-unlock drawdown with Social Security support
+1. **Accumulation** — from today to your target retirement age, compounding contributions
+2. **Bridge** — from retirement to 401k unlock, drawing down from brokerage
+3. **Post-unlock drawdown** — 401k funds withdrawals first; Social Security reduces the draw starting at claim age
 
-It also compares two brokerage blend paths side by side so you can model how different portfolio mixes may change retirement timing and longevity.
+It compares two brokerage blend paths side by side so you can model how different portfolio mixes change retirement timing and longevity.
 
-## Planning Logic
+### Planning Assumptions
 
-The current planning model assumes:
+- Brokerage is the bridge account from retirement to 401k unlock
+- 401k compounds with its own return assumptions, stops receiving contributions at retirement, and stays untouched until unlock age
+- After unlock, withdrawals come from the 401k first
+- Remaining brokerage balance after unlock stays invested as reserve capital
+- Social Security reduces the required portfolio draw at the selected claim age
+- Inflation adjustment (if enabled) reduces the real purchasing power of nominal returns
 
-- brokerage is the bridge account from retirement age to 401k unlock
-- the 401k compounds using its own configured assumptions and stops receiving contributions at retirement
-- the 401k stays untouched until unlock age
-- after unlock, withdrawals come from the 401k first
-- if brokerage still has money after unlock, it remains invested as reserve capital until the 401k is exhausted
-- Social Security reduces the required portfolio draw starting at the selected claim age
+---
 
-This means the brokerage comparison paths are used to understand bridge safety and residual brokerage value, while the 401k path is modeled from the 401k assumptions rather than from the brokerage blend.
+## Using the App
+
+1. Run `npm start` and open **http://localhost:3456**
+2. Click **Plan Settings** (top right) to enter your profile, contributions, and return assumptions
+3. Click **Update Balances** to record today's account balances
+4. Use the **Brokerage Path Builder** on the What If? tab to configure your two portfolio blends
+5. Review the **Am I On Track?** tab for your current progress against the base plan
+6. Use the **What If?** tab to stress-test scenarios
+
+---
+
+## Brokerage Path Builder
+
+Each blend has two ticker slots, a split %, and a per-holding expected return. The weighted blended return drives the projection engine. The **Try auto-fill returns** button fetches recent CAGR estimates from a public data source — useful as a starting point but always verify and adjust manually.
+
+---
+
+## Scenario Modeling
+
+Three built-in scenarios (Bull Case, Tech Crash, Custom) plus up to **5 named saved scenarios** you can label, configure, and switch between. Named scenarios are stored in your data file.
+
+The What If tab also includes a **Monte Carlo** panel. It uses randomized monthly returns around your selected scenario assumptions to estimate success odds to ages 90, 95, and 100, plus percentile balance paths. These outputs are scenario-only and do not affect the deterministic `Am I On Track?` view.
+
+---
+
+## Data Management
+
+From the **Settings drawer**:
+
+- **Export data** — downloads a dated JSON snapshot of your full data file
+- **Import data** — uploads a JSON backup to replace your current data file
+- **Reset defaults** — wipes your data file back to generic sample values
+
+---
+
+## Running in Development
+
+```bash
+npm run dev
+```
+
+Uses Node's built-in `--watch` flag to restart the server automatically on file changes.
+
+---
+
+## Dependencies
+
+- [Express](https://expressjs.com/) — local HTTP server and API
+- [Chart.js](https://www.chartjs.org/) — loaded from CDN for charts
+
+---
 
 ## Product Spec
 
-For future updates and regression review, see:
-
-- [docs/FEATURES_AND_PRD.md](docs/FEATURES_AND_PRD.md)
-
-This file captures product requirements, privacy guardrails, current decisions, and a regression checklist so functionality is not lost over time.
-
-## Screenshots
-
-### 1. Enter balances, income, spending, and portfolio blends
-
-![Inputs overview](docs/screenshots/inputs-overview.png)
-
-### 2. Review bridge viability, longevity, and portfolio comparisons
-
-![Projections overview](docs/screenshots/projections-overview.png)
-
-## How To Use
-
-1. Open `index.html` in your browser.
-2. Enter your current date, date of birth, brokerage balance, and 401k balance.
-3. Set your monthly brokerage contribution, salary, 401k contribution %, and employer match.
-4. Adjust retirement assumptions like target retirement age, annual spend, unlock age, and Social Security inputs.
-5. Build your brokerage paths in `Brokerage Blend Builder`.
-6. For each blend:
-   - enter up to two tickers
-   - set the split percentages
-   - enter or edit the expected return for each holding
-7. Review:
-   - earliest viable retirement age
-   - bridge viability at your target age
-   - balances at retirement and at 59.5
-   - portfolio longevity
-   - `Brokerage Bridge Plan` for the bridge account under both blend paths
-   - `401k Path` using only 401k assumptions
-   - `Retirement Cash Flow` showing Social Security, 401k withdrawals, brokerage withdrawals, and spend
-
-## Brokerage Blend Builder
-
-The app supports two editable brokerage paths:
-
-- `Primary blend`
-- `Alternative blend`
-
-Each blend has:
-
-- two ticker fields
-- two split % fields
-- two per-holding expected return fields
-- one live weighted return used by the projection engine
-
-The `Try auto-fill returns` button is best-effort only. Some browsers block cross-origin finance requests for `file://` pages, so manual return entry is always supported and should be treated as the reliable path.
-
-## History Tracking
-
-The app stores:
-
-- balance snapshots
-- dated salary / contribution settings
-
-It also shows:
-
-- monthly change
-- 1-year change
-- lifetime change
-
-## Local Run
-
-Open the file directly:
-
-```text
-file:///path/to/index.html
-```
-
-Or from this workspace:
-
-```text
-file:///E:/Projects/RetirementPlanner/index.html
-```
-
-## Notes
-
-- The app uses [Chart.js](https://www.chartjs.org/) from a CDN for charts.
-- If Chart.js or return auto-fill cannot load, the core planner still works.
-- Print/export uses `window.print()`.
+For feature requirements and regression tracking, see [`docs/FEATURES_AND_PRD.md`](docs/FEATURES_AND_PRD.md).
