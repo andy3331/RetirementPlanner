@@ -5,7 +5,9 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3456;
 const HOST = process.env.HOST || "127.0.0.1";
-const DATA_DIR = path.join(__dirname, "data");
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(__dirname, process.env.DATA_DIR)
+  : path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "planner-data.json");
 
 /* ===== MIDDLEWARE ===== */

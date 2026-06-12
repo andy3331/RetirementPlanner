@@ -14,12 +14,15 @@
       <div class="topBarInner">
         <div class="appTitle">Retirement Planner</div>
         <div class="tabNav">
-          <button class="tabBtn active" data-tab="track">Am I On Track?</button>
-          <button class="tabBtn" data-tab="whatif">What If?</button>
+          <button class="tabBtn active" data-tab="track">Today</button>
+          <button class="tabBtn" data-tab="whatif">Explore</button>
+          <button class="tabBtn" data-tab="history">History</button>
+          <button class="tabBtn" data-tab="data">Data</button>
         </div>
         <button class="settingsBtn" id="openSettings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Plan Settings</span>
+          <span class="draftPill hidden" id="settingsDraftBadge">Draft</span>
         </button>
       </div>
     </nav>
@@ -29,7 +32,7 @@
       <!-- APP LOADER -->
       <div id="appLoader" class="appLoader">
         <div class="appLoaderSpinner"></div>
-        <span>Loading your plan&hellip;</span>
+        <span id="appLoaderText">Loading your plan&hellip;</span>
       </div>
 
       <!-- PRINT HEADER (only shown in print) -->
@@ -40,8 +43,7 @@
 
       <!-- FIRST-RUN BANNER -->
       <div class="firstRunBanner hidden" id="firstRunBanner">
-        <strong>Welcome!</strong> Your personal data file has been created at <code>data/planner-data.json</code>.
-        This file is gitignored and stays local to your machine. Enter your numbers in <strong>Plan Settings</strong> to get started.
+        <strong>Welcome.</strong> Your numbers stay on this machine — nothing is uploaded. Open <strong>Plan Settings</strong> to enter your profile, balances, and contributions.
         <button class="iconBtn" id="dismissFirstRun" style="margin-left:auto" type="button">&times;</button>
       </div>
 
@@ -50,88 +52,185 @@
       <!-- ============================================ -->
       <div class="tabContent active" data-tab="track">
 
-        <!-- HERO STATUS DASHBOARD -->
-        <div class="heroDash">
-          <div class="statusStrip">
-            <div class="statusCard accent" id="heroOverallStatus">
-              <div class="statusLabel">Overall Status</div>
-              <div class="statusValue" id="hOverallBadge">Loading...</div>
-              <div class="statusSub" id="hOverallDetail">Comparing actual balances vs base plan</div>
+        <!-- HERO VERDICT -->
+        <header class="hero" id="heroOverallStatus" aria-live="polite">
+          <div class="heroStatusLine">
+            <span class="statusDot" id="heroStatusDot"></span>
+            <span id="hOverallBadge">Loading&hellip;</span>
+            <span class="heroStatusDetail" id="hOverallDetail">Comparing actual balances against the base plan</span>
+          </div>
+          <h1 class="heroVerdict" id="heroVerdict">Loading your plan&hellip;</h1>
+          <div class="heroMeta">
+            <div class="heroMetaItem">
+              <span>Bridge coverage</span>
+              <strong id="hBrokerageCoverage">&ndash;</strong>
+              <small id="hBrokerageDetail"></small>
             </div>
-            <div class="statusCard">
-              <div class="statusLabel">Brokerage Coverage</div>
-              <div class="statusValue" id="hBrokerageCoverage">-</div>
-              <div class="statusSub" id="hBrokerageDetail">vs required for base plan</div>
+            <div class="heroMetaItem">
+              <span>401k coverage</span>
+              <strong id="h401kCoverage">&ndash;</strong>
+              <small id="h401kDetail"></small>
             </div>
-            <div class="statusCard">
-              <div class="statusLabel">401k Coverage</div>
-              <div class="statusValue" id="h401kCoverage">-</div>
-              <div class="statusSub" id="h401kDetail">vs required for base plan</div>
+            <div class="heroMetaItem">
+              <span>Target</span>
+              <strong id="hTarget">&ndash;</strong>
+              <small id="hTargetDetail"></small>
             </div>
-            <div class="statusCard">
-              <div class="statusLabel">Target</div>
-              <div class="statusValue" id="hTarget">-</div>
-              <div class="statusSub" id="hTargetDetail">-</div>
-            </div>
-            <div class="statusCard">
-              <div class="statusLabel">Last Updated</div>
-              <div class="statusValue" id="hUpdated">-</div>
-              <div class="statusSub" id="hUpdatedDetail">-</div>
+            <div class="heroMetaItem">
+              <span>Balances as of</span>
+              <strong id="hUpdated">&ndash;</strong>
+              <small id="hUpdatedDetail"></small>
             </div>
           </div>
-          <!-- MILESTONE PILLS ROW -->
-          <div id="milestonesRow" class="milestonesRow"></div>
           <div class="actionRow">
-            <button class="btn" id="openModal"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Update Balances</button>
-            <button class="btn alt" id="openAssumptionModalInline"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Schedule Comp Change</button>
-            <button class="btn alt" id="printBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print / Export PDF</button>
+            <button class="btn" id="openModal">Update balances</button>
+            <button class="btn alt" id="openAssumptionModalInline">Schedule a comp change</button>
+            <button class="btn alt" id="printBtn">Print / export PDF</button>
           </div>
-        </div>
+        </header>
 
-        <!-- TRACK STATUS CARDS -->
+        <!-- ON-TRACK REVIEW -->
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>On-Track Review</h2>
-              <p class="sub">Does each account have enough today to meet your base-plan target?</p>
+              <h2>On-track review</h2>
+              <p class="sub">Whether each account has enough today to meet your target.</p>
             </div>
           </div>
           <div class="grid2" id="trackStatusCards"></div>
         </div>
 
-        <!-- ACTUAL VS REQUIRED CHARTS -->
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>Progress Charts</h2>
-              <p class="sub">Actual balances plotted against what each account needs over time.</p>
+              <h2>What's limiting the plan</h2>
+              <p class="sub">The binding constraint right now: the bridge, the 401k requirement, or pre-65 healthcare.</p>
+            </div>
+          </div>
+          <div class="grid4" id="trackConstraintCards"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>What would help most</h2>
+            </div>
+          </div>
+          <div class="sum" id="trackActionSummary"></div>
+          <div class="grid4" id="trackActionCards" style="margin-top: 1rem"></div>
+        </div>
+
+        <!-- PROGRESS CHARTS -->
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Progress</h2>
+              <p class="sub">Actual balances against the path each account needs, by age.</p>
             </div>
           </div>
           <div class="charts">
             <div class="chartWrap">
-              <h3>Actual Brokerage vs Base-Plan Path</h3>
+              <h3>Brokerage — actual vs plan</h3>
               <div class="canvasSlot"><canvas id="actualBrokerageChart"></canvas></div>
-              <div class="sub hidden" id="actualBrokerageFallback">Chart.js could not render the brokerage review chart.</div>
+              <div class="sub hidden" id="actualBrokerageFallback">The brokerage review chart could not render.</div>
             </div>
             <div class="chartWrap">
-              <h3>Actual 401k vs Base-Plan Path</h3>
+              <h3>401k — actual vs plan</h3>
               <div class="canvasSlot"><canvas id="actual401kChart"></canvas></div>
-              <div class="sub hidden" id="actual401kFallback">Chart.js could not render the 401k review chart.</div>
+              <div class="sub hidden" id="actual401kFallback">The 401k review chart could not render.</div>
             </div>
           </div>
-          <p class="sub" style="margin-top: .85rem">
-            Actual lines stop at your latest saved snapshot. Dashed lines show your projected base-plan path from today forward, using your current assumptions and retirement age.
+          <p class="mini" style="margin-top: .85rem">
+            Solid lines are saved snapshots; dashed lines are the projected base-plan path from today forward.
           </p>
           <div class="sum" style="margin-top: 1rem">
             <p id="reviewNote"></p>
           </div>
+          <p class="mini" style="margin-top: 0.6rem">
+            <a class="quietLink" href="#data">See the year-by-year math &rarr;</a>
+          </p>
         </div>
+
+      </div>
+
+      <!-- ============================================ -->
+      <!--  TAB: HISTORY                                -->
+      <!-- ============================================ -->
+      <div class="tabContent" data-tab="history">
+
+        <!-- BALANCE & CHANGE TRACKING -->
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Balance changes</h2>
+              <p class="sub">How your balances have moved over time.</p>
+            </div>
+          </div>
+          <div class="grid3" id="changeCards"></div>
+          <div class="tableWrap" style="margin-top: 1rem">
+            <table>
+              <thead>
+                <tr><th>Account</th><th>Monthly</th><th>1-year</th><th>Lifetime</th></tr>
+              </thead>
+              <tbody id="changeMatrix"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- BALANCE HISTORY -->
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Balance history</h2>
+              <p class="sub">Dated brokerage and 401k snapshots used to track actual progress.</p>
+            </div>
+            <div class="btns">
+              <button class="btn sm" id="openModalHistory">Add snapshot</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Brokerage</th><th>401k</th><th>Total</th><th>Change</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="history"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- COMP / CONTRIBUTION TIMELINE -->
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Compensation timeline</h2>
+              <p class="sub">Effective-dated salary and contribution settings used for projections.</p>
+            </div>
+            <div class="btns">
+              <button class="btn sm" id="openAssumptionModal">Add change</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr><th>Effective date</th><th>Brokerage/mo</th><th>Salary</th><th>401k %</th><th>Match %</th><th>401k/mo</th><th>Delta vs prior</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="assumptionHistory"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============================================ -->
+      <!--  TAB: DATA / AUDIT                           -->
+      <!-- ============================================ -->
+      <div class="tabContent" data-tab="data">
 
         <!-- BASE PLAN SNAPSHOT -->
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>Base Plan Snapshot</h2>
+              <h2>Base plan snapshot</h2>
               <p class="sub">Key numbers from your base plan used for the on-track benchmark.</p>
             </div>
           </div>
@@ -142,8 +241,8 @@
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>Base-Plan Math Breakdown</h2>
-              <p class="sub">Yearly rollup of the same math engine used by the charts and planner so you can audit balances, contributions, withdrawals, and Social Security.</p>
+              <h2>Base-plan math, year by year</h2>
+              <p class="sub">A yearly rollup of the same engine behind the charts, so every balance, contribution, withdrawal, and Social Security figure can be audited.</p>
             </div>
           </div>
           <div class="sum" id="basePlanMathSummary"></div>
@@ -154,12 +253,18 @@
                   <th>Year</th>
                   <th>Age Range</th>
                   <th>Phase</th>
+                  <th>Annual Salary Path</th>
+                  <th>Brokerage / Mo Path</th>
+                  <th>401k Rate Path</th>
+                  <th>401k Split / Yr</th>
                   <th>Brokerage Start</th>
-                  <th>Brokerage Contrib</th>
+                  <th>Brokerage Contrib / Yr</th>
                   <th>Brokerage Withdraw</th>
                   <th>Brokerage End</th>
                   <th>401k Start</th>
-                  <th>401k Contrib</th>
+                  <th>401k Contrib / Yr</th>
+                  <th>401k Employee / Yr</th>
+                  <th>401k Match / Yr</th>
                   <th>401k Withdraw</th>
                   <th>401k End</th>
                   <th>SS Income</th>
@@ -187,139 +292,69 @@
           </div>
         </div>
 
-        <!-- BALANCE & CHANGE TRACKING -->
-        <div class="panel">
-          <div class="panelHead">
-            <div>
-              <h2>Balance Changes</h2>
-              <p class="sub">Track how your balances have moved over time.</p>
-            </div>
-          </div>
-          <div class="grid3" id="changeCards"></div>
-          <div class="tableWrap" style="margin-top: 1rem">
-            <table>
-              <thead>
-                <tr><th>Account</th><th>Monthly</th><th>1-Year</th><th>Lifetime</th></tr>
-              </thead>
-              <tbody id="changeMatrix"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- BALANCE HISTORY -->
-        <div class="panel">
-          <div class="panelHead">
-            <div>
-              <h2>Balance History</h2>
-              <p class="sub">Dated brokerage and 401k snapshots used to track actual progress.</p>
-            </div>
-            <div class="btns">
-              <button class="btn sm" id="openModalHistory">Add Snapshot</button>
-            </div>
-          </div>
-          <div class="tableWrap">
-            <table>
-              <thead>
-                <tr><th>Date</th><th>Brokerage</th><th>401k</th><th>Total</th><th>Change</th><th>Actions</th></tr>
-              </thead>
-              <tbody id="history"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- COMP / CONTRIBUTION TIMELINE -->
-        <div class="panel">
-          <div class="panelHead">
-            <div>
-              <h2>Comp / Contribution Timeline</h2>
-              <p class="sub">Effective-dated salary and contribution settings used for projections.</p>
-            </div>
-            <div class="btns">
-              <button class="btn sm" id="openAssumptionModal">Add Change</button>
-            </div>
-          </div>
-          <div class="tableWrap">
-            <table>
-              <thead>
-                <tr><th>Effective Date</th><th>Brokerage/mo</th><th>Salary</th><th>401k %</th><th>Match %</th><th>401k/mo</th><th>Delta vs Prior</th><th>Actions</th></tr>
-              </thead>
-              <tbody id="assumptionHistory"></tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
 
       <!-- ============================================ -->
       <!--  TAB 2: WHAT IF?                             -->
       <!-- ============================================ -->
-      <div class="tabContent" data-tab="whatif">
+      <div class="tabContent" data-tab="whatif" style="position:relative">
 
-        <!-- SCENARIO CONTROLS -->
-        <div class="panel" style="margin-top: 1.5rem">
-          <div class="panelHead">
-            <div>
-              <h2>Scenario</h2>
-              <p class="sub">Stress-test your plan separately from real progress. Changes here never affect your on-track view.</p>
-            </div>
-          </div>
-          <div class="toggles">
-            <button class="pill" data-s="bull">Bull Case</button>
-            <button class="pill" data-s="crash">Tech Crash</button>
-            <button class="pill" data-s="custom">Custom</button>
-          </div>
-          <div class="note" id="scenarioNote"></div>
-
-          <div class="grid2">
-            <div class="field">
-              <label for="scenarioTargetRetirementAge">Scenario retirement age</label>
-              <input id="scenarioTargetRetirementAge" type="text" inputmode="decimal" />
-              <input id="scenarioTargetRetirementAgeRange" type="range" min="47" max="60" step="0.5" />
-            </div>
-            <div style="display:flex;align-items:center;gap:0.5rem">
-              <button class="btn alt sm" id="syncScenarioAgeBtn" type="button">Match base age</button>
-              <span class="sub">Syncs to your base-plan target age</span>
-            </div>
-          </div>
-
-          <!-- CUSTOM OVERRIDES -->
-          <div class="grid4 hidden" id="customGrid" style="margin-top: 1rem">
-            <div class="field">
-              <label for="customIywAccumReturn">Custom primary blend return</label>
-              <input id="customIywAccumReturn" type="text" inputmode="decimal" />
-            </div>
-            <div class="field">
-              <label for="customQqqmAccumReturn">Custom alt blend return</label>
-              <input id="customQqqmAccumReturn" type="text" inputmode="decimal" />
-            </div>
-            <div class="field">
-              <label for="customPostRetirementReturn">Custom post-retirement return</label>
-              <input id="customPostRetirementReturn" type="text" inputmode="decimal" />
-            </div>
-            <div class="field">
-              <label for="customK401AccumReturn">Custom 401k accumulation</label>
-              <input id="customK401AccumReturn" type="text" inputmode="decimal" />
-            </div>
-            <div class="field">
-              <label for="customK401PostReturn">Custom 401k post-retirement</label>
-              <input id="customK401PostReturn" type="text" inputmode="decimal" />
-            </div>
+        <!-- Full-tab loading overlay shown while sync render runs after Recalculate -->
+        <div id="whatIfOverlay" class="whatIfOverlay hidden" aria-live="polite" aria-label="Calculating">
+          <div class="whatIfOverlayBox">
+            <div class="appLoaderSpinner" style="width:28px;height:28px;border-width:3px"></div>
+            <p class="whatIfOverlayMsg">Calculating…</p>
           </div>
         </div>
 
-        <!-- BROKERAGE PATH BUILDER -->
-        <div class="panel">
-          <div class="panelHead">
-            <div>
-              <h2>Brokerage Path Builder</h2>
-              <p class="sub">Define two scenario-only portfolio blends to compare in the What If view.</p>
-            </div>
-            <div class="btns">
-              <button class="btn alt sm" id="promoteBlendToBasePlan" type="button">Use Primary As Base Plan</button>
-              <div class="mini" id="blendFetchStatus">Auto-fill estimates 5-year CAGR. Manual entry always wins.</div>
-            </div>
-          </div>
-          <div class="cards">
+        <div class="exploreLayout">
+
+          <!-- ===== CONTROL RAIL ===== -->
+          <aside class="exploreRail" aria-label="Scenario controls">
+
+            <section class="railSection">
+              <h2>Scenario</h2>
+              <p class="mini">Stress-test separately from real progress. Nothing here changes the Today view.</p>
+              <div class="toggles">
+                <button class="pill" data-s="bull">Bull case</button>
+                <button class="pill" data-s="crash">Tech crash</button>
+                <button class="pill" data-s="custom">Custom</button>
+              </div>
+              <div class="field">
+                <label for="scenarioTargetRetirementAge">Retirement age</label>
+                <input id="scenarioTargetRetirementAge" type="text" inputmode="decimal" />
+                <input id="scenarioTargetRetirementAgeRange" type="range" min="47" max="60" step="0.5" />
+              </div>
+              <button class="btn alt sm" id="syncScenarioAgeBtn" type="button">Match base-plan age</button>
+              <div class="railGrid hidden" id="customGrid">
+                <div class="field">
+                  <label for="customIywAccumReturn">Custom primary blend return</label>
+                  <input id="customIywAccumReturn" type="text" inputmode="decimal" />
+                </div>
+                <div class="field">
+                  <label for="customQqqmAccumReturn">Custom alt blend return</label>
+                  <input id="customQqqmAccumReturn" type="text" inputmode="decimal" />
+                </div>
+                <div class="field">
+                  <label for="customPostRetirementReturn">Custom post-retirement return</label>
+                  <input id="customPostRetirementReturn" type="text" inputmode="decimal" />
+                </div>
+                <div class="field">
+                  <label for="customK401AccumReturn">Custom 401k accumulation</label>
+                  <input id="customK401AccumReturn" type="text" inputmode="decimal" />
+                </div>
+                <div class="field">
+                  <label for="customK401PostReturn">Custom 401k post-retirement</label>
+                  <input id="customK401PostReturn" type="text" inputmode="decimal" />
+                </div>
+              </div>
+            </section>
+
+            <details class="railSection railDetails">
+              <summary>Portfolio blends</summary>
+              <p class="mini">Two scenario-only blends to compare. Auto-fill estimates 5-year CAGR; manual entry always wins.</p>
+              <div class="mini" id="blendFetchStatus"></div>
+              <div class="railBlends">
             <div class="group">
               <h3 id="blendALabel">Primary blend</h3>
               <p class="sub">Primary scenario path used only in the What If comparison unless you explicitly promote it to the base plan.</p>
@@ -391,24 +426,119 @@
               </div>
               <button class="btn alt sm" id="blendBAutoFill" type="button">Try auto-fill returns</button>
             </div>
-          </div>
-        </div>
+              </div>
+              <button class="btn alt sm" id="promoteBlendToBasePlan" type="button">Use primary as base plan</button>
+            </details>
 
-        <!-- SAVED SCENARIOS -->
-        <div class="panel" id="savedScenariosPanel">
-          <div class="panelHead">
-            <div><h2>Saved Scenarios</h2><p class="sub">Save up to 5 named scenario configurations to compare.</p></div>
-            <button class="btn sm" id="saveScenarioBtn" type="button">Save current</button>
-          </div>
-          <div id="savedScenariosList"></div>
-          <div class="hidden" id="saveScenarioForm" style="margin-top:0.75rem">
-            <div class="field"><label for="newScenarioName">Scenario name</label><input id="newScenarioName" type="text" placeholder="e.g. Retire at 53, Lower spend" maxlength="40" /></div>
-            <div class="btns" style="margin-top:0.75rem">
-              <button class="btn sm" id="confirmSaveScenario" type="button">Save</button>
-              <button class="btn alt sm" id="cancelSaveScenario" type="button">Cancel</button>
-            </div>
-          </div>
-        </div>
+            <section class="railSection">
+              <h2>Withdrawal strategy</h2>
+              <div class="railGrid">
+                <div class="field">
+                  <label for="scenarioStrategyFund">Comparison path</label>
+                  <select id="scenarioStrategyFund">
+                    <option value="iyw">Primary blend</option>
+                    <option value="qqqm">Alternative blend</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="scenarioWithdrawalStrategy">Post-unlock withdrawal strategy</label>
+                  <select id="scenarioWithdrawalStrategy">
+                    <option value="k401First">401k first</option>
+                    <option value="brokerageFirst">Brokerage first</option>
+                    <option value="proRata">Pro-rata</option>
+                    <option value="brokerageReserve">Brokerage reserve</option>
+                    <option value="taxAware">Tax-aware heuristic</option>
+                    <option value="goalAware">Adaptive optimizer</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="scenarioOptimizationGoal">Optimization goal</label>
+                  <select id="scenarioOptimizationGoal">
+                    <option value="balanced">Balanced recommendation</option>
+                    <option value="age75">Maximize age-75 balance</option>
+                    <option value="tax">Minimize estimated tax</option>
+                    <option value="brokerage">Preserve brokerage</option>
+                  </select>
+                </div>
+                <div class="field hidden" id="scenarioReserveField">
+                  <label for="scenarioBrokerageReserveYears">Brokerage reserve years</label>
+                  <input id="scenarioBrokerageReserveYears" type="text" inputmode="decimal" />
+                </div>
+                <div class="field hidden" id="scenarioTaxCapField">
+                  <label for="scenarioTaxAwareAnnualCap">401k ordinary-income cap / year</label>
+                  <input id="scenarioTaxAwareAnnualCap" type="text" inputmode="decimal" />
+                </div>
+                <div class="field hidden" id="scenarioTaxStatusField">
+                  <label for="scenarioTaxFilingStatus">Federal filing status</label>
+                  <select id="scenarioTaxFilingStatus">
+                    <option value="single">Single</option>
+                    <option value="marriedJoint">Married filing jointly</option>
+                  </select>
+                </div>
+                <div class="field hidden" id="scenarioTaxGainField">
+                  <label for="scenarioBrokerageGainRate">Starting embedded gain % in brokerage</label>
+                  <input id="scenarioBrokerageGainRate" type="text" inputmode="decimal" />
+                  <div class="mini">Starting taxable-gain estimate for brokerage cost basis; the planner carries the basis forward as the account changes.</div>
+                </div>
+                <div class="field hidden" id="scenarioStateTaxField">
+                  <label for="scenarioStateTaxRate">State tax rate %</label>
+                  <input id="scenarioStateTaxRate" type="text" inputmode="decimal" />
+                </div>
+              </div>
+              <div class="mini" id="strategyControlNote"></div>
+            </section>
+
+            <details class="railSection railDetails">
+              <summary>Monte Carlo settings</summary>
+              <div class="railGrid">
+                <div class="field">
+                  <label for="monteCarloRuns">Runs</label>
+                  <input id="monteCarloRuns" type="text" inputmode="numeric" />
+                </div>
+                <div class="field">
+                  <label for="monteBrokerageVol">Brokerage volatility %</label>
+                  <input id="monteBrokerageVol" type="text" inputmode="decimal" />
+                </div>
+                <div class="field">
+                  <label for="monte401kVol">401k volatility %</label>
+                  <input id="monte401kVol" type="text" inputmode="decimal" />
+                </div>
+                <div class="field">
+                  <label for="monteTargetAge">Target success age</label>
+                  <select id="monteTargetAge">
+                    <option value="90">90</option>
+                    <option value="95">95</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="monteTargetSuccess">Target success %</label>
+                  <input id="monteTargetSuccess" type="text" inputmode="decimal" />
+                </div>
+              </div>
+            </details>
+
+            <section class="railSection" id="savedScenariosPanel">
+              <h2>Saved scenarios</h2>
+              <p class="mini">Save up to 5 named configurations to compare.</p>
+              <div id="savedScenariosList"></div>
+              <button class="btn sm" id="saveScenarioBtn" type="button">Save current</button>
+              <div class="hidden" id="saveScenarioForm" style="margin-top:0.75rem">
+                <div class="field"><label for="newScenarioName">Scenario name</label><input id="newScenarioName" type="text" placeholder="e.g. Retire at 53, lower spend" maxlength="40" /></div>
+                <div class="btns" style="margin-top:0.75rem">
+                  <button class="btn sm" id="confirmSaveScenario" type="button">Save</button>
+                  <button class="btn alt sm" id="cancelSaveScenario" type="button">Cancel</button>
+                </div>
+              </div>
+            </section>
+
+          </aside>
+
+          <!-- ===== RESULTS ===== -->
+          <div class="exploreMain">
+
+          <h2 class="exploreVerdict" id="exploreVerdict" aria-live="polite"></h2>
+          <p class="note" id="scenarioNote"></p>
 
         <!-- BRIDGE WARNING -->
         <div class="panel hidden" id="warningPanel">
@@ -423,18 +553,116 @@
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>Scenario Comparison</h2>
+              <h2>Path comparison</h2>
               <p class="sub">Side-by-side outcomes at your target retirement age. Headline shows earliest full-plan-safe age, with bridge-safe age shown separately.</p>
             </div>
           </div>
           <div class="cards" id="cards"></div>
         </div>
 
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Withdrawal strategies</h2>
+              <p class="sub">How each post-unlock draw order supports your target age. Pick the strategy and goal in the rail.</p>
+            </div>
+          </div>
+          <div class="sum" id="strategySummary"></div>
+          <div class="grid4" id="strategyDriverCards" style="margin-top: 1rem"></div>
+          <div id="strategyCards" style="margin-top: 1rem"></div>
+          <details class="guideNote" style="margin-top:1rem">
+            <summary>Selected strategy yearly audit</summary>
+            <p class="sub" id="strategyAuditSummary" style="margin:0.5rem 0 0.9rem"></p>
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Year</th>
+                    <th>Ages</th>
+                    <th>Phase</th>
+                    <th>Withdrawal rule</th>
+                    <th>Annual salary path</th>
+                    <th>Brokerage / mo path</th>
+                    <th>401k rate path</th>
+                    <th>401k split / yr</th>
+                    <th>Brokerage start</th>
+                    <th>Brokerage draw</th>
+                    <th>Brokerage end</th>
+                    <th>401k start</th>
+                    <th>401k draw</th>
+                    <th>401k end</th>
+                    <th>Realized gains</th>
+                    <th>Est. ACA MAGI</th>
+                    <th>Est. LTCG tax</th>
+                    <th>Taxable SS</th>
+                    <th>Est. state tax</th>
+                    <th>Est. total tax</th>
+                    <th>SS income</th>
+                    <th>Spend</th>
+                    <th>Gap</th>
+                    <th>Total end</th>
+                  </tr>
+                </thead>
+                <tbody id="strategyAuditRows"></tbody>
+              </table>
+            </div>
+          </details>
+          <details class="guideNote" style="margin-top:1rem">
+            <summary>Selected strategy tax and MAGI worksheet</summary>
+            <p class="sub" id="strategyTaxSummary" style="margin:0.5rem 0 0.9rem"></p>
+            <div class="grid4" id="strategyTaxSnapshot" style="margin-bottom:0.9rem"></div>
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Year</th>
+                    <th>Ages</th>
+                    <th>Withdrawal rule</th>
+                    <th>Wages</th>
+                    <th>401k ordinary income</th>
+                    <th>Realized brokerage gains</th>
+                    <th>SS income</th>
+                    <th>Taxable SS</th>
+                    <th>Est. ACA MAGI</th>
+                    <th>Federal ordinary tax</th>
+                    <th>LTCG tax</th>
+                    <th>State tax</th>
+                    <th>Total tax</th>
+                  </tr>
+                </thead>
+                <tbody id="strategyTaxRows"></tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Savings needed</h2>
+              <p class="sub">See how much brokerage or 401k saving is needed to keep your target retirement age viable under the selected withdrawal strategy.</p>
+            </div>
+          </div>
+          <div class="sum" id="savingsStrategySummary"></div>
+          <div class="cards" id="savingsStrategyCards"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>What would make this work</h2>
+              <p class="sub">Solver-backed levers that would make the selected What If scenario work more reliably.</p>
+            </div>
+          </div>
+          <div class="sum" id="scenarioActionSummary"></div>
+          <div class="grid4" id="scenarioActionCards" style="margin-top: 1rem"></div>
+        </div>
+
         <!-- TARGET AGE BRIDGE STATUS -->
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>Bridge Status at Target Age</h2>
+              <h2>Bridge status at target age</h2>
               <p class="sub">Does the brokerage survive to 401k unlock at your selected scenario age?</p>
             </div>
           </div>
@@ -445,7 +673,7 @@
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>Scenario Charts</h2>
+              <h2>Projections</h2>
               <p class="sub">Forward-looking projections for bridge, 401k, and retirement funding under the active scenario.</p>
             </div>
             <div class="field" style="max-width: 200px">
@@ -468,18 +696,18 @@
           </div>
           <div class="charts">
             <div class="chartWrap">
-              <h3>Brokerage Bridge Plan</h3>
+              <h3>Brokerage bridge</h3>
               <div class="canvasSlot"><canvas id="brokerageChart"></canvas></div>
               <div class="sub hidden" id="brokerageFallback">Chart.js could not render here.</div>
             </div>
             <div class="chartWrap">
-              <h3>401k Path</h3>
+              <h3>401k path</h3>
               <div class="canvasSlot"><canvas id="k401Chart"></canvas></div>
               <div class="sub hidden" id="k401Fallback">Chart.js could not render here.</div>
             </div>
           </div>
         <div class="chartWrap" style="margin-top: 1rem">
-            <h3>Retirement Funding Mix</h3>
+            <h3>Funding mix</h3>
             <div class="canvasSlot"><canvas id="mixChart"></canvas></div>
             <div class="sub hidden" id="mixFallback">Chart.js could not render here.</div>
           </div>
@@ -490,44 +718,45 @@
           <div class="panelHead">
             <div>
               <h2>Monte Carlo</h2>
-              <p class="sub">Probability-based scenario stress test using randomized monthly returns. This stays on the What If side and does not change your on-track review.</p>
-            </div>
-            <div class="drawerGrid" style="grid-template-columns: repeat(3, minmax(120px, 1fr)); max-width: 540px;">
-              <div class="field">
-                <label for="monteCarloRuns">Runs</label>
-                <input id="monteCarloRuns" type="text" inputmode="numeric" />
-              </div>
-              <div class="field">
-                <label for="monteBrokerageVol">Brokerage volatility %</label>
-                <input id="monteBrokerageVol" type="text" inputmode="decimal" />
-              </div>
-              <div class="field">
-                <label for="monte401kVol">401k volatility %</label>
-                <input id="monte401kVol" type="text" inputmode="decimal" />
-              </div>
+              <p class="sub">Probability-based stress test using randomized monthly returns. Settings live in the rail; this never changes your on-track review.</p>
             </div>
           </div>
           <div class="sum">
             <p id="monteCarloSummary"></p>
           </div>
           <div class="cards" id="monteCarloCards" style="margin-top:1rem"></div>
+          <div class="sum" id="monteActionSummary" style="margin-top:1rem"></div>
+          <div class="grid3" id="monteActionCards" style="margin-top:1rem"></div>
           <div class="chartWrap" style="margin-top: 1rem">
-            <h3>Monte Carlo Percentile Paths</h3>
+            <h3>Percentile paths</h3>
             <div class="canvasSlot"><canvas id="monteCarloChart"></canvas></div>
             <div class="sub hidden" id="monteCarloFallback">Chart.js could not render here.</div>
           </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>How much to trust this</h2>
+              <p class="sub">How much trust to place in the current What If recommendations, based on data quality and modeling depth.</p>
+            </div>
+          </div>
+          <div class="sum" id="confidenceSummary"></div>
+          <div class="grid4" id="confidenceCards" style="margin-top: 1rem"></div>
         </div>
 
         <!-- SCENARIO SUMMARY -->
         <div class="panel">
           <div class="panelHead">
             <div>
-              <h2>Scenario Summary</h2>
-              <p class="sub">Plain-English summary of the selected modeling scenario.</p>
+              <h2>In plain English</h2>
             </div>
           </div>
           <div class="sum"><p id="summary"></p></div>
         </div>
+
+          </div><!-- /exploreMain -->
+        </div><!-- /exploreLayout -->
 
       </div>
     </div>
@@ -539,9 +768,19 @@
           <h2>Plan Settings</h2>
           <button class="iconBtn" id="closeSettings" type="button">&times;</button>
         </div>
+        <div class="settingsDraftBar hidden" id="settingsDraftBar">
+          <div class="settingsDraftBarText">
+            <div class="mini" id="settingsDraftStatus">Changes stay in the drawer until you click Apply settings.</div>
+            <div class="mini hidden" id="settingsApplyLoading">Applying settings and recalculating the planner&hellip;</div>
+          </div>
+          <div class="settingsDraftBarActions">
+            <button class="btn" id="applySettingsBtn" type="button" disabled>Apply Settings</button>
+            <button class="btn alt sm" id="discardSettingsBtn" type="button" disabled>Discard Draft</button>
+          </div>
+        </div>
 
         <div class="drawerSection">
-          <h3>Current Profile</h3>
+          <h3>Profile</h3>
           <p class="sub" style="margin-bottom:0.65rem">Age is calculated from date of birth and current date.</p>
           <div class="drawerGrid">
             <div class="field">
@@ -583,6 +822,11 @@
               <input id="annualSalary" type="text" inputmode="decimal" />
             </div>
             <div class="field">
+              <label for="annualSalaryGrowthRate">Annual salary growth %</label>
+              <input id="annualSalaryGrowthRate" type="text" inputmode="decimal" />
+              <div class="mini">Applied prospectively from the active salary entry until the next explicit salary change.</div>
+            </div>
+            <div class="field">
               <label for="employerMatchPct" class="labelWithHelp">Employer match % (derived)
                 <span class="helpTip" tabindex="0" aria-label="Employer match formula">
                   ?
@@ -603,8 +847,8 @@
         </div>
 
         <div class="drawerSection">
-          <h3>Base Plan Assumptions</h3>
-          <p class="sub" style="margin-bottom:0.65rem">These drive on-track benchmarks and are the starting point for scenarios.</p>
+          <h3>Base plan</h3>
+          <p class="sub" style="margin-bottom:0.65rem">These drive the on-track benchmarks and are the starting point for scenarios.</p>
           <div class="drawerGrid">
             <div class="field">
               <label for="targetRetirementAge">Target retirement age</label>
@@ -648,12 +892,89 @@
               <input id="inflationRate" type="text" inputmode="decimal" placeholder="2.5" />
             </div>
           </div>
+          <details class="drawerAdvanced">
+            <summary>Healthcare &amp; ACA (advanced)</summary>
+            <div class="drawerGrid">
+              <div class="field">
+                <label for="preMedicareHealthcareCost">Annual pre-Medicare healthcare cost</label>
+                <input id="preMedicareHealthcareCost" type="text" inputmode="decimal" />
+              </div>
+              <div class="field">
+                <label for="acaHealthcareMode">ACA healthcare mode</label>
+                <select id="acaHealthcareMode">
+                  <option value="manual">Manual flat cost</option>
+                  <option value="incomeSensitive">Income-sensitive heuristic</option>
+                </select>
+                <div class="mini">ACA household size appears when you switch to income-sensitive mode.</div>
+              </div>
+              <div class="field">
+                <label for="acaPolicyPreset">ACA policy preset</label>
+                <select id="acaPolicyPreset">
+                  <option value="current">Current policy</option>
+                  <option value="reduced">Reduced subsidies</option>
+                  <option value="severe">Severe stress</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="field" id="acaManualField">
+                <label for="acaStressMultiplier">ACA policy stress %</label>
+                <input id="acaStressMultiplier" type="text" inputmode="decimal" />
+              </div>
+              <div class="field hidden" id="acaBenchmarkField">
+                <label for="acaBenchmarkAnnualPremium">ACA benchmark premium / year</label>
+                <input id="acaBenchmarkAnnualPremium" type="text" inputmode="decimal" />
+              </div>
+              <div class="field hidden" id="acaSubsidyRuleField">
+                <label for="acaSubsidyRule">ACA subsidy rule</label>
+                <select id="acaSubsidyRule">
+                  <option value="irsSchedule">IRS premium tax credit schedule</option>
+                  <option value="customCap">Custom premium cap %</option>
+                </select>
+              </div>
+              <div class="field hidden" id="acaIncomeCapField">
+                <label for="acaIncomeCapPct">Custom ACA premium cap % of income</label>
+                <input id="acaIncomeCapPct" type="text" inputmode="decimal" />
+              </div>
+              <div class="field hidden" id="acaHouseholdField">
+                <label for="acaHouseholdSize">ACA household size</label>
+                <select id="acaHouseholdSize">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                </select>
+              </div>
+              <div class="field" style="grid-column: 1 / -1">
+                <p class="mini" style="margin:0">Manual mode adds the pre-Medicare healthcare cost, scaled by the ACA stress setting, on top of retirement spending. Income-sensitive mode estimates a premium from a benchmark plus a subsidy rule, using an income proxy from wages before retirement and then 401k withdrawals, realized gains, and Social Security after. Presets: current = 100%, reduced = 150%, severe = 200%. Policy-sensitive values live in <code>policy-config.js</code>.</p>
+              </div>
+            </div>
+          </details>
         </div>
 
         <div class="drawerSection">
           <h3>Social Security</h3>
-          <p class="sub" style="margin-bottom:0.65rem">Age 70 uses 124% of full retirement age benefit.</p>
-          <div class="drawerGrid">
+          <p class="sub" style="margin-bottom:0.65rem">Use manual inputs or import your SSA Statement XML. Statement mode reduces projected benefits when your retirement age stops future earnings before claim age.</p>
+          <div class="drawerGrid" style="margin-bottom:0.85rem">
+            <div class="field">
+              <label for="ssEstimateMode">Benefit estimate mode</label>
+              <select id="ssEstimateMode">
+                <option value="manual">Manual benefit inputs</option>
+                <option value="statementXml">SSA statement XML</option>
+              </select>
+            </div>
+            <div class="field" style="align-self:end">
+              <label>&nbsp;</label>
+              <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+                <button class="btn alt sm" id="ssXmlImportBtn" type="button">Import SSA XML</button>
+                <button class="btn alt sm" id="clearSsXml" type="button">Clear import</button>
+                <input id="ssXmlFile" type="file" accept=".xml,text/xml,application/xml" class="hidden" />
+              </div>
+            </div>
+          </div>
+          <div class="readonly" id="ssStatementSummary" style="margin-bottom:0.85rem">No SSA statement imported yet.</div>
+          <div class="drawerGrid" id="ssManualFields">
             <div class="field">
               <label for="ss62">Monthly SS at age 62</label>
               <input id="ss62" type="text" inputmode="decimal" />
@@ -662,6 +983,8 @@
               <label for="ssFRA">Monthly SS at full retirement age</label>
               <input id="ssFRA" type="text" inputmode="decimal" />
             </div>
+          </div>
+          <div class="drawerGrid">
             <div class="field">
               <label for="ssClaimAge">SS claim age</label>
               <select id="ssClaimAge">
@@ -675,6 +998,7 @@
               <div class="readonly" id="ssApplied">-</div>
             </div>
           </div>
+          <div class="mini" style="margin-top:0.7rem">Policy-sensitive Social Security rules, like the delayed-claim multiplier used for age 70, also live in <code>policy-config.js</code> so future policy updates are easy to audit.</div>
         </div>
 
         <div class="drawerActions">
@@ -775,6 +1099,7 @@
       </div>
     </div>
 
+    <script src="policy-config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

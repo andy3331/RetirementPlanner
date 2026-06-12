@@ -6,6 +6,7 @@
 .tmp-browser-profile-future/
 __check.js
 __dom.html
+__review_shot.html
 __future-dom.html
 __set_storage.html
 Thumbs.db
@@ -15,3 +16,4 @@ node_modules/
 
 # Your personal data — never commit this
 data/
+data-dev/

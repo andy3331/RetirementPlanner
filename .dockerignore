@@ -1,0 +1,12 @@
+.git
+.gitignore
+.chrome-debug
+.claude
+.docs-profile
+.tmp-browser-profile
+.tmp-browser-profile-future
+node_modules
+data
+npm-debug.log
+Dockerfile*
+docker-compose*.yml

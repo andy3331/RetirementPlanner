@@ -15,6 +15,8 @@ The app is a single-file, browser-only retirement planning tool that helps a use
 - compare two different brokerage portfolio blends
 - estimate bridge survival until 401k access
 - estimate post-unlock longevity with a defined withdrawal order
+- compare post-unlock withdrawal strategies
+- suggest brokerage vs 401k savings mixes for a target retirement age
 - incorporate Social Security timing
 - track historical balance, salary, and contribution changes over time
 
@@ -54,12 +56,26 @@ These are especially important.
 
 ### App shape
 
-- Single file: `index.html`
-- Embedded CSS
-- Embedded JavaScript
+- `index.html` for the app shell
+- `app.js` for the main planner engine
+- `policy-config.js` for policy-sensitive ACA and Social Security assumptions
+- `server.js` for local-only file-backed persistence
 - Charting via Chart.js CDN
 - No build tools
 - No framework dependency
+
+### Policy-sensitive assumptions
+
+ACA and Social Security policy values that may change over time should be centralized in `policy-config.js`, not scattered through `app.js`.
+
+That includes:
+
+- delayed-claim Social Security multipliers
+- ACA stress presets
+- federal poverty level baselines
+- ACA premium-tax-credit applicable percentage brackets
+
+When policy changes, update `policy-config.js` first and keep any planner-copy or UI text aligned with it.
 
 ### Persistence
 
@@ -127,10 +143,15 @@ The app must support:
 - age 62 monthly benefit
 - full retirement age monthly benefit
 - claim age selection
+- Social Security estimate mode:
+  - manual fixed inputs
+  - SSA statement XML import
+- statement-based stop-work adjustment tied to retirement age
 
 Expected behavior:
 
 - claim-age-adjusted SS amount is shown live
+- if SSA statement XML mode is active, the planner uses imported statement estimates and earnings history to reduce benefits when retirement age implies future covered earnings stop before claim age
 
 ### 5. Brokerage blend builder
 
@@ -162,6 +183,8 @@ The app must support:
 - Tech crash
 - Custom
 - Monte Carlo stress testing
+- withdrawal strategy comparison
+- savings-strategy suggestions
 
 Expected behavior:
 
@@ -170,6 +193,8 @@ Expected behavior:
 - scenario description text updates live
 - Monte Carlo stays in the What If view and must not change the base-plan on-track review
 - Monte Carlo should report probability-based outcomes separately from deterministic outputs
+- withdrawal strategy comparison must stay in the What If view and feed the scenario charts/summary consistently
+- any tax-aware strategy must be labeled clearly as heuristic unless full tax modeling is added
 
 ### 7. Simulation engine
 
@@ -202,6 +227,14 @@ From unlock age onward:
 - Social Security is added starting at claim age
 - monthly withdrawals continue net of SS
 - longevity is the age at which the remaining retirement assets hit zero, if they do
+
+The What If view may compare alternate post-unlock draw orders, including:
+
+- 401k first
+- brokerage first
+- pro-rata
+- brokerage reserve
+- a tax-aware heuristic using a user-set annual 401k draw cap
 
 ### 8. Viability outputs
 
@@ -359,6 +392,35 @@ Before merging changes, verify:
 13. Public tracked defaults are still sanitized.
 14. Public screenshots do not contain private user data.
 15. README still matches the actual UI.
+16. `npm test` passes so the full planner regression suite still agrees with the critical solver logic.
+17. `npm run test:fast` passes for day-to-day deterministic coverage.
+18. `npm run test:integration` passes for slower UI/persistence/import coverage.
+
+### Automated math coverage
+
+The repo now includes split Node-based planner tests that run the real app logic through a headless DOM harness. Treat them as required protection for high-risk retirement logic changes:
+
+- `npm run test:fast`
+  - deterministic solver and Monte Carlo invariant coverage
+- `npm run test:integration`
+  - settings-draft behavior, What If/base-plan separation, and persistence/import fallback coverage
+- `npm test`
+  - full trust run before merge
+
+These suites are especially important around:
+
+- employer-match calculations
+- Social Security claim / stop-work behavior
+- ACA / pre-65 healthcare assumptions
+- salary-growth propagation
+- accumulation and bridge math
+- post-unlock withdrawal behavior
+- tax-breakdown sanity
+- Monte Carlo invariants
+- drawer/apply/discard behavior
+- server/local fallback and import safety
+
+If core planning math changes intentionally, update the tests alongside the behavior change rather than deleting or weakening the assertions.
 
 ## Change Management Guidance
 
