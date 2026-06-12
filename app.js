@@ -1175,13 +1175,30 @@
         return buildState(null);
       }
       if (hasUnsyncedLocal && cached) {
+        // The unsynced flag is usually a false alarm: the page-close beacon
+        // save sets it pessimistically because beacon results can't be
+        // confirmed. Reconcile now — write the browser copy to disk; only
+        // keep the warning if that write genuinely fails.
         try {
           const fallback = buildState(JSON.parse(cached));
-          showTopBanner(
-            "unsynced",
-            `<strong>Using newer local changes.</strong> The file-backed save failed earlier, so the browser copy is being used until the next successful save to <code>data/planner-data.json</code>.`,
-          );
-          return fallback;
+          try {
+            const reconcile = await fetch("/api/data", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(fallback),
+            });
+            if (reconcile.ok) {
+              clearUnsyncedSave();
+              return fallback;
+            }
+            throw new Error(`status ${reconcile.status}`);
+          } catch {
+            showTopBanner(
+              "unsynced",
+              `<strong>Using newer local changes.</strong> The file-backed save failed earlier, so the browser copy is being used until the next successful save to <code>data/planner-data.json</code>.`,
+            );
+            return fallback;
+          }
         } catch {}
       }
       clearUnsyncedSave();

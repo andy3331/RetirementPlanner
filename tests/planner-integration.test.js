@@ -151,7 +151,8 @@ test("load falls back to cached local planner data when /api/data returns a non-
   assert.equal(Number(hooks.getState().annualRetirementSpend), 47000);
 });
 
-test("unsynced local planner data wins over stale server data on load", async () => {
+test("unsynced local data reconciles silently to disk on load when the save works", async () => {
+  let reconcilePosts = 0;
   const { dom, hooks } = await loadPlannerHooks({
     initialLocalStorage: {
       "retirementPlanner.v1": JSON.stringify({
@@ -160,9 +161,54 @@ test("unsynced local planner data wins over stale server data on load", async ()
       }),
       "retirementPlanner.v1.unsynced": "Local changes newer than file",
     },
-    fetchImpl: async (url) => {
+    fetchImpl: async (url, options = {}) => {
       const pathName = typeof url === "string" ? url : url?.url || "";
       if (pathName.includes("/api/data")) {
+        if ((options.method || "GET").toUpperCase() === "POST") {
+          reconcilePosts += 1;
+          return { ok: true, status: 200, json: async () => ({ ok: true }) };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            firstRun: false,
+            data: {
+              targetRetirementAge: 50,
+              annualRetirementSpend: 60000,
+            },
+          }),
+        };
+      }
+      throw new Error(`Unexpected fetch in test harness: ${pathName}`);
+    },
+  });
+  const banner = dom.window.document.getElementById("firstRunBanner");
+
+  // Local copy still wins...
+  assert.equal(Number(hooks.getState().targetRetirementAge), 58);
+  assert.equal(Number(hooks.getState().annualRetirementSpend), 42000);
+  // ...but it was written back to disk, the flag cleared, and no banner shown.
+  assert.ok(reconcilePosts >= 1);
+  assert.equal(dom.window.localStorage.getItem("retirementPlanner.v1.unsynced"), null);
+  assert.notEqual(banner.dataset.bannerKind, "unsynced");
+});
+
+test("unsynced local data keeps the warning banner when the reconcile save fails", async () => {
+  const { dom, hooks } = await loadPlannerHooks({
+    initialLocalStorage: {
+      "retirementPlanner.v1": JSON.stringify({
+        targetRetirementAge: 58,
+        annualRetirementSpend: 42000,
+      }),
+      "retirementPlanner.v1.unsynced": "Local changes newer than file",
+    },
+    fetchImpl: async (url, options = {}) => {
+      const pathName = typeof url === "string" ? url : url?.url || "";
+      if (pathName.includes("/api/data")) {
+        if ((options.method || "GET").toUpperCase() === "POST") {
+          return { ok: false, status: 500, json: async () => ({ error: "disk" }) };
+        }
         return {
           ok: true,
           status: 200,
